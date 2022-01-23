@@ -32,11 +32,11 @@ describe('staking_program', () => {
   it('Is initialized!', async () => {
     // Add your test here.
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(superOwner.publicKey, 2000000000),
+      await provider.connection.requestAirdrop(superOwner.publicKey, 1000000000),
       "confirmed"
     );
     await provider.connection.confirmTransaction(
-      await provider.connection.requestAirdrop(user.publicKey, 2000000000),
+      await provider.connection.requestAirdrop(user.publicKey, 1000000000),
       "confirmed"
     );
     
@@ -71,7 +71,10 @@ describe('staking_program', () => {
       [Buffer.from(POOL_WALLET_SEED)],
       program.programId
     );
-    
+    await provider.connection.confirmTransaction(
+      await provider.connection.requestAirdrop(poolWalletKey, 1000000000),
+      "confirmed"
+    );
     console.log("poolWalletKey =", poolWalletKey.toBase58());
 
     const tx = await program.rpc.initialize(
@@ -343,7 +346,6 @@ describe('staking_program', () => {
       bump, nft_bump, walletBump, {
         accounts: {
           owner: user.publicKey,
-          admin: superOwner.publicKey,
           userFixedPool: userFixedPoolKey,
           globalAuthority,
           poolWallet: poolWalletKey,

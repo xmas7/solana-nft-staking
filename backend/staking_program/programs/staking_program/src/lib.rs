@@ -169,7 +169,7 @@ pub mod staking_program {
             transfer_ctx,
             1
         )?;
-/*
+
         sol_transfer_with_signer(
             ctx.accounts.pool_wallet.to_account_info(),
             ctx.accounts.owner.to_account_info(),
@@ -177,7 +177,7 @@ pub mod staking_program {
             &[&[POOL_WALLET_SEED.as_ref(), &[pool_wallet_bump]]],
             reward
         )?;
-*/
+
         Ok(())
     }
 }
@@ -347,9 +347,6 @@ pub struct WithdrawNftFromFixed<'info> {
     pub owner: Signer<'info>,
 
     #[account(mut)]
-    pub admin: AccountInfo<'info>,
-
-    #[account(mut)]
     pub user_fixed_pool: AccountLoader<'info, UserPool>,
 
     #[account(
@@ -360,6 +357,7 @@ pub struct WithdrawNftFromFixed<'info> {
     pub global_authority: Account<'info, GlobalPool>,
 
     #[account(
+        mut,
         seeds = [POOL_WALLET_SEED.as_ref()],
         bump = pool_wallet_bump,
     )]

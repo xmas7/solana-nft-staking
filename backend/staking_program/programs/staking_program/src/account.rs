@@ -38,7 +38,7 @@ impl UserPool {
             let index = i as usize;
             if self.items[index].nft_addr.eq(&nft_mint) {
                 
-                //require!(self.items[index].stake_time + LIMIT_PERIOD <= now, StakingError::InvalidWithdrawTime);
+                require!(self.items[index].stake_time + LIMIT_PERIOD <= now, StakingError::InvalidWithdrawTime);
                 reward = (((now - self.items[index].stake_time) / DAY) as u64) * REWARD_PER_DAY;
 
                 // remove nft
