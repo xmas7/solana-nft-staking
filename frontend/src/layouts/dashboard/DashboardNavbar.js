@@ -54,10 +54,8 @@ export default function DashboardNavbar({ onOpenSidebar }) {
       <ToolbarStyle>
           <Grid container>
             <Grid item xs={10}>
-              <Box style={{ color: 'black', fontSize: '30px', fontWeight: 'bold' }}>Hall of Heros - Present your Hero Image Here</Box>
             </Grid>
             <Grid item xs={2}>
-              
               <Table>
                 <TableBody>
                   <TableRow>
