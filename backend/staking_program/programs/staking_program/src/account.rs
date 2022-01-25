@@ -11,6 +11,34 @@ pub struct GlobalPool {
 }
 
 #[zero_copy]
+#[derive(Default)]
+pub struct Item {
+    // 80
+    pub owner: Pubkey,      // 32
+    pub nft_addr: Pubkey,   // 32
+    pub stake_time: i64     // 8
+}
+
+#[account(zero_copy)]
+pub struct GlobalLotteryPool {
+    pub lottery_items: [Item; NFT_TOTAL_COUNT], // 80 * 5000 = 400_000
+    pub item_count: u64
+}
+impl Default for GlobalLotteryPool {
+    #[inline]
+    fn default() -> GlobalLotteryPool {
+        GlobalLotteryPool {
+            lottery_items: [
+                Item {
+                    ..Default::default()
+                }; NFT_TOTAL_COUNT
+            ],
+            item_count: 0
+        }
+    }
+}
+
+#[zero_copy]
 #[derive(Default, PartialEq)]
 pub struct StakedNFT {
     pub nft_addr: Pubkey,      // 32
@@ -19,10 +47,26 @@ pub struct StakedNFT {
 
 #[account(zero_copy)]
 pub struct UserPool {
-    // 2048
+    // 2056
     pub owner: Pubkey,                       // 32
     pub item_count: u64,                     // 8
-    pub items: [StakedNFT; NFT_MAX_COUNT],   // 40 * 50 = 2000
+    pub items: [StakedNFT; NFT_STAKE_MAX_COUNT],   // 40 * 50 = 2000
+    pub reward_time: i64                     // 8
+}
+impl Default for UserPool {
+    #[inline]
+    fn default() -> UserPool {
+        UserPool {
+            owner: Pubkey::default(),
+            item_count: 0,
+            items: [
+                StakedNFT {
+                    ..Default::default()
+                }; NFT_STAKE_MAX_COUNT
+            ],
+            reward_time: 0
+        }
+    }
 }
 
 impl UserPool {
@@ -38,8 +82,13 @@ impl UserPool {
             let index = i as usize;
             if self.items[index].nft_addr.eq(&nft_mint) {
                 
-                require!(self.items[index].stake_time + LIMIT_PERIOD <= now, StakingError::InvalidWithdrawTime);
-                reward = (((now - self.items[index].stake_time) / DAY) as u64) * REWARD_PER_DAY;
+                //require!(self.items[index].stake_time + LIMIT_PERIOD <= now, StakingError::InvalidWithdrawTime);
+                let mut last_reward_time = self.reward_time;
+                if last_reward_time < self.items[index].stake_time {
+                    last_reward_time = self.items[index].stake_time;
+                }
+
+                reward = (((now - last_reward_time) / DAY) as u64) * REWARD_PER_DAY;
 
                 // remove nft
                 if i != self.item_count - 1 {
@@ -53,6 +102,21 @@ impl UserPool {
         }
         require!(withdrawn == 1, StakingError::InvalidNFTAddress);
         Ok(reward)
+    }
+    pub fn claim_reward(&mut self, now: i64) -> Result<u64> {
+        let mut total_reward: u64 = 0;
+        for i in 0..self.item_count {
+            let index = i as usize;
+            //require!(self.items[index].stake_time + LIMIT_PERIOD <= now, StakingError::InvalidWithdrawTime);
+            let mut last_reward_time = self.reward_time;
+            if last_reward_time < self.items[index].stake_time {
+                last_reward_time = self.items[index].stake_time;
+            }
+            let reward = (((now - last_reward_time) / DAY) as u64) * REWARD_PER_DAY;
+            total_reward += reward;
+        }
+        self.reward_time = now;
+        Ok(total_reward)
     }
 }
 

@@ -20,7 +20,7 @@ declare_id!("FbaMJWS14yAPH68LwFAHxaBSukgBHnAY9VaEfhFxWerb");
 pub mod staking_program {
     use super::*;
     pub fn initialize(
-        ctx: Context<Initialize>,
+        _ctx: Context<Initialize>,
         global_bump: u8,
         pool_wallet_bump: u8
     ) -> ProgramResult {
@@ -43,6 +43,7 @@ pub mod staking_program {
         Ok(())
     }
 
+    #[access_control(user(&ctx.accounts.user_lottery_pool, &ctx.accounts.owner))]
     pub fn stake_nft_to_lottery(
         ctx: Context<StakeNftToLottery>, 
         global_bump: u8,
@@ -74,6 +75,7 @@ pub mod staking_program {
         Ok(())
     }
 
+    #[access_control(user(&ctx.accounts.user_lottery_pool, &ctx.accounts.owner))]
     pub fn withdraw_nft_from_lottery(
         ctx: Context<WithdrawNftFromLottery>, 
         global_bump: u8,
@@ -107,6 +109,7 @@ pub mod staking_program {
         Ok(())
     }
 
+    #[access_control(user(&ctx.accounts.user_fixed_pool, &ctx.accounts.owner))]
     pub fn stake_nft_to_fixed(
         ctx: Context<StakeNftToFixed>, 
         global_bump: u8,
@@ -138,6 +141,7 @@ pub mod staking_program {
         Ok(())
     }
 
+    #[access_control(user(&ctx.accounts.user_fixed_pool, &ctx.accounts.owner))]
     pub fn withdraw_nft_from_fixed(
         ctx: Context<WithdrawNftFromFixed>, 
         global_bump: u8,
@@ -168,6 +172,31 @@ pub mod staking_program {
         token::transfer(
             transfer_ctx,
             1
+        )?;
+
+        sol_transfer_with_signer(
+            ctx.accounts.pool_wallet.to_account_info(),
+            ctx.accounts.owner.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            &[&[POOL_WALLET_SEED.as_ref(), &[pool_wallet_bump]]],
+            reward
+        )?;
+
+        Ok(())
+    }
+
+    #[access_control(user(&ctx.accounts.user_fixed_pool, &ctx.accounts.owner))]
+    pub fn claim_reward(
+        ctx: Context<ClaimReward>,
+        global_bump: u8,
+        staked_nft_bump: u8,
+        pool_wallet_bump: u8
+    ) -> ProgramResult {
+        let timestamp = Clock::get()?.unix_timestamp;
+    
+        let mut fixed_pool = ctx.accounts.user_fixed_pool.load_mut()?;
+        let reward: u64 = fixed_pool.claim_reward(
+            timestamp
         )?;
 
         sol_transfer_with_signer(
@@ -382,4 +411,36 @@ pub struct WithdrawNftFromFixed<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>
+}
+
+#[derive(Accounts)]
+#[instruction(global_bump: u8, staked_nft_bump: u8, pool_wallet_bump: u8)]
+pub struct ClaimReward<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+
+    #[account(mut)]
+    pub user_fixed_pool: AccountLoader<'info, UserPool>,
+
+    #[account(
+        mut,
+        seeds = [GLOBAL_AUTHORITY_SEED.as_ref()],
+        bump = global_bump,
+    )]
+    pub global_authority: Account<'info, GlobalPool>,
+
+    #[account(
+        mut,
+        seeds = [POOL_WALLET_SEED.as_ref()],
+        bump = pool_wallet_bump,
+    )]
+    pub pool_wallet: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
+}
+
+// Access control modifiers
+fn user(pool_loader: &AccountLoader<UserPool>, user: &AccountInfo) -> Result<()> {
+    let user_pool = pool_loader.load()?;
+    require!(user_pool.owner == *user.key, StakingError::InvalidUserPool);
+    Ok(())
 }

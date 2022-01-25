@@ -1,4 +1,6 @@
-pub const NFT_MAX_COUNT: usize = 50;
+pub const NFT_STAKE_MAX_COUNT: usize = 50;
+pub const NFT_TOTAL_COUNT: usize = 5000;
+
 pub const GLOBAL_AUTHORITY_SEED: &str = "global-authority";
 pub const POOL_WALLET_SEED: &str = "pool-wallet";
 
