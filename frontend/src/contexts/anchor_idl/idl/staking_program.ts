@@ -16,6 +16,11 @@ export type StakingProgram = {
           "isSigner": false
         },
         {
+          "name": "globalLotteryPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "poolWallet",
           "isMut": true,
           "isSigner": false
@@ -88,6 +93,11 @@ export type StakingProgram = {
           "isSigner": false
         },
         {
+          "name": "globalLotteryPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "globalAuthority",
           "isMut": true,
           "isSigner": false
@@ -153,6 +163,11 @@ export type StakingProgram = {
           "isSigner": false
         },
         {
+          "name": "globalLotteryPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "globalAuthority",
           "isMut": true,
           "isSigner": false
@@ -201,6 +216,10 @@ export type StakingProgram = {
         {
           "name": "stakedNftBump",
           "type": "u8"
+        },
+        {
+          "name": "withdrawIndex",
+          "type": "u64"
         }
       ]
     },
@@ -342,6 +361,50 @@ export type StakingProgram = {
           "type": "u8"
         }
       ]
+    },
+    {
+      "name": "claimReward",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "userFixedPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "globalAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "globalBump",
+          "type": "u8"
+        },
+        {
+          "name": "stakedNftBump",
+          "type": "u8"
+        },
+        {
+          "name": "poolWalletBump",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -356,6 +419,29 @@ export type StakingProgram = {
           },
           {
             "name": "fixedNftCount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "globalLotteryPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lotteryItems",
+            "type": {
+              "array": [
+                {
+                  "defined": "Item"
+                },
+                5000
+              ]
+            }
+          },
+          {
+            "name": "itemCount",
             "type": "u64"
           }
         ]
@@ -384,12 +470,36 @@ export type StakingProgram = {
                 50
               ]
             }
+          },
+          {
+            "name": "rewardTime",
+            "type": "i64"
           }
         ]
       }
     }
   ],
   "types": [
+    {
+      "name": "Item",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "nftAddr",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakeTime",
+            "type": "i64"
+          }
+        ]
+      }
+    },
     {
       "name": "StakedNFT",
       "type": {
@@ -410,23 +520,33 @@ export type StakingProgram = {
   "errors": [
     {
       "code": 6000,
+      "name": "InvalidUserPool",
+      "msg": "Invalid User Pool"
+    },
+    {
+      "code": 6001,
       "name": "InvalidPoolError",
       "msg": "Invalid pool number"
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "InvalidNFTAddress",
       "msg": "No Matching NFT to withdraw"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "InvalidOwner",
       "msg": "NFT Owner key mismatch"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "InvalidWithdrawTime",
       "msg": "Staking Locked Now"
+    },
+    {
+      "code": 6005,
+      "name": "IndexOverflow",
+      "msg": "Withdraw NFT Index OverFlow"
     }
   ]
 };
@@ -449,6 +569,11 @@ export const IDL: StakingProgram = {
           "isSigner": false
         },
         {
+          "name": "globalLotteryPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "poolWallet",
           "isMut": true,
           "isSigner": false
@@ -521,6 +646,11 @@ export const IDL: StakingProgram = {
           "isSigner": false
         },
         {
+          "name": "globalLotteryPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "globalAuthority",
           "isMut": true,
           "isSigner": false
@@ -586,6 +716,11 @@ export const IDL: StakingProgram = {
           "isSigner": false
         },
         {
+          "name": "globalLotteryPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "globalAuthority",
           "isMut": true,
           "isSigner": false
@@ -634,6 +769,10 @@ export const IDL: StakingProgram = {
         {
           "name": "stakedNftBump",
           "type": "u8"
+        },
+        {
+          "name": "withdrawIndex",
+          "type": "u64"
         }
       ]
     },
@@ -775,6 +914,50 @@ export const IDL: StakingProgram = {
           "type": "u8"
         }
       ]
+    },
+    {
+      "name": "claimReward",
+      "accounts": [
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "userFixedPool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "globalAuthority",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "poolWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "globalBump",
+          "type": "u8"
+        },
+        {
+          "name": "stakedNftBump",
+          "type": "u8"
+        },
+        {
+          "name": "poolWalletBump",
+          "type": "u8"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -789,6 +972,29 @@ export const IDL: StakingProgram = {
           },
           {
             "name": "fixedNftCount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "globalLotteryPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lotteryItems",
+            "type": {
+              "array": [
+                {
+                  "defined": "Item"
+                },
+                5000
+              ]
+            }
+          },
+          {
+            "name": "itemCount",
             "type": "u64"
           }
         ]
@@ -817,12 +1023,36 @@ export const IDL: StakingProgram = {
                 50
               ]
             }
+          },
+          {
+            "name": "rewardTime",
+            "type": "i64"
           }
         ]
       }
     }
   ],
   "types": [
+    {
+      "name": "Item",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "nftAddr",
+            "type": "publicKey"
+          },
+          {
+            "name": "stakeTime",
+            "type": "i64"
+          }
+        ]
+      }
+    },
     {
       "name": "StakedNFT",
       "type": {
@@ -843,23 +1073,33 @@ export const IDL: StakingProgram = {
   "errors": [
     {
       "code": 6000,
+      "name": "InvalidUserPool",
+      "msg": "Invalid User Pool"
+    },
+    {
+      "code": 6001,
       "name": "InvalidPoolError",
       "msg": "Invalid pool number"
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "InvalidNFTAddress",
       "msg": "No Matching NFT to withdraw"
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "InvalidOwner",
       "msg": "NFT Owner key mismatch"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "InvalidWithdrawTime",
       "msg": "Staking Locked Now"
+    },
+    {
+      "code": 6005,
+      "name": "IndexOverflow",
+      "msg": "Withdraw NFT Index OverFlow"
     }
   ]
 };

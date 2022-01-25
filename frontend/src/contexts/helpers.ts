@@ -22,15 +22,16 @@ const ASSOCIATED_TOKEN_PROGRAM_ID: PublicKey = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
 const PROGRAM_ID = "FbaMJWS14yAPH68LwFAHxaBSukgBHnAY9VaEfhFxWerb";
-
+let superAdminPk = new PublicKey("2aNiCg9JyGgv8TXdY3Nf1Df2mhgUhg9ZuZGXv5c9DPTL");
 const GLOBAL_AUTHORITY_SEED = "global-authority";
 const POOL_WALLET_SEED = "pool-wallet";
-const POOL_SIZE = 2048;
+const POOL_SIZE = 2056;
+const GLOBAL_POOL_SIZE = 360_016;
 
 export const initProject = async (
   wallet: WalletContextState
 ) => {
-  console.log("on Init click");
+  /*console.log("on Init click");
   if (!wallet.publicKey) return;
   let cloneWindow: any = window;
   let provider = new anchor.Provider(solConnection, cloneWindow['solana'], anchor.Provider.defaultOptions())
@@ -45,22 +46,41 @@ export const initProject = async (
     program.programId
   );
 
+
+  let globalLotteryPoolKey = await PublicKey.createWithSeed(
+    superAdmin.publicKey,
+    "global-lottery-pool",
+    program.programId,
+  );
+  let ix = SystemProgram.createAccountWithSeed({
+    fromPubkey: superAdmin.publicKey,
+    basePubkey: superAdmin.publicKey,
+    seed: "global-lottery-pool",
+    newAccountPubkey: globalLotteryPoolKey,
+    lamports : await provider.connection.getMinimumBalanceForRentExemption(GLOBAL_POOL_SIZE),
+    space: GLOBAL_POOL_SIZE,
+    programId: program.programId,
+  });
+  console.log("globalLotteryPoolKey =", globalLotteryPoolKey.toBase58())
+
   const tx = await program.rpc.initialize(
     bump, walletBump, {
       accounts: {
         admin: wallet.publicKey,
         globalAuthority,
+        globalLotteryPool: globalLotteryPoolKey,
         poolWallet: poolWalletKey,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY
       },
+      instructions: [ix],
       signers: []
     }
   );
   await solConnection.confirmTransaction(tx, "confirmed");
 
   showToast("Success. txHash=" + tx, 0);
-  console.log("txHash =", tx);
+  console.log("txHash =", tx);*/
   return false;
 }
 
@@ -176,13 +196,18 @@ export const stakeToLottery = async (
     [Buffer.from("staked-nft"), nft_mint.toBuffer()],
     program.programId
   );
-
+  let globalLotteryPoolKey = await PublicKey.createWithSeed(
+    superAdminPk,
+    "global-lottery-pool",
+    program.programId,
+  );
   let userTokenAccount = await getNFTTokenAccount(nft_mint);
   tx.add(program.instruction.stakeNftToLottery(
     bump, nft_bump, {
       accounts: {
         owner: wallet.publicKey,
         userLotteryPool: userLotteryPoolKey,
+        globalLotteryPool: globalLotteryPoolKey,
         globalAuthority,
         userNftTokenAccount: userTokenAccount,
         destNftTokenAccount: staked_nft_address,
@@ -231,12 +256,27 @@ export const withdrawFromLottery = async (
     program.programId
   );
 
+  let globalLotteryPoolKey = await PublicKey.createWithSeed(
+    superAdminPk,
+    "global-lottery-pool",
+    program.programId,
+  );
+  let globalLotteryPoolData: any = await program.account.globalLotteryPool.fetch(globalLotteryPoolKey);
+  let nftIndex = 0;
+  for(let i = 0; i < globalLotteryPoolData.itemCount.toNumber(); i ++) {
+    if (globalLotteryPoolData.lotteryItems[i].nftAddr.toBase58() == nft_mint.toBase58()) {
+      nftIndex = i;
+      break;
+    }
+  }
+
   let userTokenAccount = await getTokenAccount(nft_mint, wallet.publicKey);
   tx.add(program.instruction.withdrawNftFromLottery(
-    bump, nft_bump, {
+    bump, nft_bump, new anchor.BN(nftIndex), {
       accounts: {
         owner: wallet.publicKey,
         userLotteryPool: userLotteryPoolKey,
+        globalLotteryPool: globalLotteryPoolKey,
         globalAuthority,
         userNftTokenAccount: userTokenAccount,
         stakedNftTokenAccount: staked_nft_address,

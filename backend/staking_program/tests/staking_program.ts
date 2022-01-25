@@ -95,7 +95,7 @@ describe('staking_program', () => {
       programId: program.programId,
     });
     console.log("globalLotteryPoolKey =", globalLotteryPoolKey.toBase58())
-
+    
     const tx = await program.rpc.initialize(
       bump, walletBump, {
         accounts: {

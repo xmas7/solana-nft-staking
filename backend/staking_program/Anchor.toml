@@ -6,8 +6,8 @@ url = "https://anchor.projectserum.com"
 
 [provider]
 
-#cluster = "devnet"
-cluster = "http://127.0.0.1:8899"
+cluster = "devnet"
+#cluster = "http://127.0.0.1:8899"
 #wallet = "/home/gitpod/.config/solana/id.json"
 wallet = "./test-keypair.json"
 
