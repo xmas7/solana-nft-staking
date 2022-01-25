@@ -11,5 +11,7 @@ pub enum StakingError {
     #[msg("NFT Owner key mismatch")]
     InvalidOwner,
     #[msg("Staking Locked Now")]
-    InvalidWithdrawTime
+    InvalidWithdrawTime,
+    #[msg("Withdraw NFT Index OverFlow")]
+    IndexOverflow
 }

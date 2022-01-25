@@ -37,6 +37,22 @@ impl Default for GlobalLotteryPool {
         }
     }
 }
+impl GlobalLotteryPool {
+    pub fn add_nft(&mut self, item: Item) {
+        self.lottery_items[self.item_count as usize] = item;
+        self.item_count += 1;
+    }
+    pub fn remove_nft(&mut self, owner: Pubkey, nft_mint: Pubkey, index: u64) -> Result<()> {
+        require!(self.item_count > index, StakingError::IndexOverflow);
+        // remove nft
+        if index != self.item_count - 1 {
+            let last_idx = self.item_count - 1;
+            self.lottery_items[index as usize] = self.lottery_items[last_idx as usize];
+        }
+        self.item_count -= 1;
+        Ok(())
+    }
+}
 
 #[zero_copy]
 #[derive(Default, PartialEq)]

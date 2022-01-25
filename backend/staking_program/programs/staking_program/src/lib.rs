@@ -20,10 +20,11 @@ declare_id!("FbaMJWS14yAPH68LwFAHxaBSukgBHnAY9VaEfhFxWerb");
 pub mod staking_program {
     use super::*;
     pub fn initialize(
-        _ctx: Context<Initialize>,
+        ctx: Context<Initialize>,
         global_bump: u8,
         pool_wallet_bump: u8
     ) -> ProgramResult {
+        ctx.accounts.global_lottery_pool.load_init()?;
         Ok(())
     }
 
@@ -59,6 +60,13 @@ pub mod staking_program {
         let mut lottery_pool = ctx.accounts.user_lottery_pool.load_mut()?;
         lottery_pool.add_nft(staked_item);
 
+        let mut global_lottery_pool = ctx.accounts.global_lottery_pool.load_mut()?;
+        global_lottery_pool.add_nft(Item {
+            owner: ctx.accounts.owner.key(),
+            nft_addr: ctx.accounts.nft_mint.key(),
+            stake_time: timestamp,
+        });
+
         ctx.accounts.global_authority.lottery_nft_count += 1;
 
         let cpi_accounts = Transfer {
@@ -80,6 +88,7 @@ pub mod staking_program {
         ctx: Context<WithdrawNftFromLottery>, 
         global_bump: u8,
         staked_nft_bump: u8,
+        withdraw_index: u64
     ) -> ProgramResult {
         
         let timestamp = Clock::get()?.unix_timestamp;
@@ -89,6 +98,13 @@ pub mod staking_program {
             ctx.accounts.owner.key(),
             ctx.accounts.nft_mint.key(), 
             timestamp
+        )?;
+
+        let mut global_lottery_pool = ctx.accounts.global_lottery_pool.load_mut()?;
+        global_lottery_pool.remove_nft(
+            ctx.accounts.owner.key(),
+            ctx.accounts.nft_mint.key(),
+            withdraw_index
         )?;
 
         ctx.accounts.global_authority.lottery_nft_count -= 1;
@@ -225,6 +241,9 @@ pub struct Initialize<'info> {
     )]
     pub global_authority: Account<'info, GlobalPool>,
 
+    #[account(zero)]
+    pub global_lottery_pool: AccountLoader<'info, GlobalLotteryPool>,
+
     #[account(
         init_if_needed,
         seeds = [POOL_WALLET_SEED.as_ref()],
@@ -266,6 +285,9 @@ pub struct StakeNftToLottery<'info> {
     #[account(mut)]
     pub user_lottery_pool: AccountLoader<'info, UserPool>,
 
+    #[account(mut)]
+    pub global_lottery_pool: AccountLoader<'info, GlobalLotteryPool>,
+
     #[account(
         mut,
         seeds = [GLOBAL_AUTHORITY_SEED.as_ref()],
@@ -302,6 +324,9 @@ pub struct WithdrawNftFromLottery<'info> {
 
     #[account(mut)]
     pub user_lottery_pool: AccountLoader<'info, UserPool>,
+
+    #[account(mut)]
+    pub global_lottery_pool: AccountLoader<'info, GlobalLotteryPool>,
 
     #[account(
         mut,
