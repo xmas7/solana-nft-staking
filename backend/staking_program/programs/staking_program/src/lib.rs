@@ -14,7 +14,7 @@ use constants::*;
 use error::*;
 use utils::*;
 
-declare_id!("FbaMJWS14yAPH68LwFAHxaBSukgBHnAY9VaEfhFxWerb");
+declare_id!("6J239Qk8gMNpLKJ6Qd7AckKD4cmv21NzPc8vzMfr6q2o");
 
 #[program]
 pub mod staking_program {
