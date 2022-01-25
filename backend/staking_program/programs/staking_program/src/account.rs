@@ -13,7 +13,7 @@ pub struct GlobalPool {
 #[zero_copy]
 #[derive(Default)]
 pub struct Item {
-    // 80
+    // 72
     pub owner: Pubkey,      // 32
     pub nft_addr: Pubkey,   // 32
     pub stake_time: i64     // 8
@@ -21,8 +21,9 @@ pub struct Item {
 
 #[account(zero_copy)]
 pub struct GlobalLotteryPool {
-    pub lottery_items: [Item; NFT_TOTAL_COUNT], // 80 * 5000 = 400_000
-    pub item_count: u64
+    // 360_016
+    pub lottery_items: [Item; NFT_TOTAL_COUNT], // 72 * 5000 = 360_000
+    pub item_count: u64                         // 8
 }
 impl Default for GlobalLotteryPool {
     #[inline]
@@ -44,6 +45,8 @@ impl GlobalLotteryPool {
     }
     pub fn remove_nft(&mut self, owner: Pubkey, nft_mint: Pubkey, index: u64) -> Result<()> {
         require!(self.item_count > index, StakingError::IndexOverflow);
+        require!(self.lottery_items[index as usize].nft_addr.eq(&nft_mint), StakingError::InvalidNFTAddress);
+        require!(self.lottery_items[index as usize].owner.eq(&owner), StakingError::InvalidOwner);
         // remove nft
         if index != self.item_count - 1 {
             let last_idx = self.item_count - 1;
