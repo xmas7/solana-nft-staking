@@ -412,4 +412,50 @@ describe('staking_program', () => {
     let userFixedPool = await program.account.userPool.fetch(userFixedPoolKey);
     //console.log("userFixedPool =", userFixedPool);
   })
+
+  it("Claim Reward", async () => {
+
+    const [globalAuthority, bump] = await PublicKey.findProgramAddress(
+      [Buffer.from(GLOBAL_AUTHORITY_SEED)],
+      program.programId
+    );
+
+    console.log("globalAuthority =", globalAuthority.toBase58());
+
+    const [poolWalletKey, walletBump] = await PublicKey.findProgramAddress(
+      [Buffer.from(POOL_WALLET_SEED)],
+      program.programId
+    );
+    
+    console.log("poolWalletKey =", poolWalletKey.toBase58());
+
+    let userFixedPoolKey = await PublicKey.createWithSeed(
+      user.publicKey,
+      "user-fixed-pool",
+      program.programId,
+    );
+
+    const [staked_nft_address, nft_bump] = await PublicKey.findProgramAddress(
+      [Buffer.from("staked-nft"), nft_token_mint.publicKey.toBuffer()],
+      program.programId
+    );
+
+    const tx = await program.rpc.claimReward(
+      bump, nft_bump, walletBump, {
+        accounts: {
+          owner: user.publicKey,
+          userFixedPool: userFixedPoolKey,
+          globalAuthority,
+          poolWallet: poolWalletKey,
+          systemProgram: SystemProgram.programId,
+        },
+        signers: [user]
+      }
+    );
+    
+    console.log("Your transaction signature", tx); 
+    
+    let userFixedPool = await program.account.userPool.fetch(userFixedPoolKey);
+    //console.log("userFixedPool =", userFixedPool);
+  })
 });
