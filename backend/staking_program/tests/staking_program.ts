@@ -242,7 +242,7 @@ describe('staking_program', () => {
     //console.log("globalLotteryPoolData =", globalLotteryPoolData);
     let nftIndex = 0;
     for(let i = 0; i < globalLotteryPoolData.itemCount.toNumber(); i ++) {
-      if (globalLotteryPoolData.items[i].nft_addr.toBase58() == nft_token_mint.publicKey.toBase58()) {
+      if (globalLotteryPoolData.lotteryItems[i].nftAddr.toBase58() == nft_token_mint.publicKey.toBase58()) {
         nftIndex = i;
         break;
       }
