@@ -23,7 +23,7 @@ export default function EcommerceShop() {
   const [lotteryNftMint, setLotteryNFTMint] = useState("");
   const [fixedNftMint, setFixedNFTMint] = useState("");
   const [lotteryState, setLotteryState] = useState({ itemCount: 0, items: [] });
-  const [fixedState, setFixedState] = useState({ itemCount: 0, items: [] });
+  const [fixedState, setFixedState] = useState({ itemCount: 0, items: [], pendingReward: 0 });
   const [globalState, setGlobalState] = useState({ lotteryNftCount: 0, fixedNftCount: 0});
   const wallet = useWallet();
 
@@ -123,6 +123,8 @@ export default function EcommerceShop() {
                   <input type="text" id="nft_mint1" value={fixedNftMint}  onChange={(e) => setFixedNFTMint(e.target.value)}></input>
                   <button onClick={() => onStakeToFixed()}>Stake To Fixed Pool</button>
                   <button onClick={() => onWithdrawFromFixed()}>Withdraw From Fixed Pool</button>
+                  
+                  <h5>Fixed Pool pending reward: {fixedState.pendingReward}</h5>
                   <h5>My Staked NFTs in Fixed Pool: {fixedState.itemCount}</h5>
                   {
                     fixedState.items.map((item, id) => (

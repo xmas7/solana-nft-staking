@@ -13,7 +13,8 @@ export function getReward(timestamp: any) {
   let d = new Date(timestamp * 1000);
   let now = new Date();
   //let time = (now.valueOf() - d.valueOf()) / 1000 / 60 / 60 / 24;
-  let time = (now.valueOf() - d.valueOf()) / 1000 / 60 / 1;
+  let time = (now.valueOf() - d.valueOf()) / (1000 * 60 * 1);
+  console.log("time =", time);
   return Math.floor(time) * 0.02;
 }
 export function chunks(array: Uint8Array, size: number) {
