@@ -21,8 +21,8 @@ const solConnection = new web3.Connection(web3.clusterApiUrl("devnet"));
 const ASSOCIATED_TOKEN_PROGRAM_ID: PublicKey = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
-const PROGRAM_ID = "FbaMJWS14yAPH68LwFAHxaBSukgBHnAY9VaEfhFxWerb";
-let superAdminPk = new PublicKey("2aNiCg9JyGgv8TXdY3Nf1Df2mhgUhg9ZuZGXv5c9DPTL");
+const PROGRAM_ID = "Efc3pnJFJheyRLAwMZjcTwjRVBBJbqzbCg2PMfJkwHKF";
+let superAdminPk = new PublicKey("9brnTDz1ydG927NMH78xmUkneznJwkuSvxDHb1qjuny3");
 const GLOBAL_AUTHORITY_SEED = "global-authority";
 const POOL_WALLET_SEED = "pool-wallet";
 const POOL_SIZE = 2056;
@@ -31,7 +31,7 @@ const GLOBAL_POOL_SIZE = 360_016;
 export const initProject = async (
   wallet: WalletContextState
 ) => {
-  /*console.log("on Init click");
+  console.log("on Init click");
   if (!wallet.publicKey) return;
   let cloneWindow: any = window;
   let provider = new anchor.Provider(solConnection, cloneWindow['solana'], anchor.Provider.defaultOptions())
@@ -48,13 +48,13 @@ export const initProject = async (
 
 
   let globalLotteryPoolKey = await PublicKey.createWithSeed(
-    superAdmin.publicKey,
+    wallet.publicKey,
     "global-lottery-pool",
     program.programId,
   );
   let ix = SystemProgram.createAccountWithSeed({
-    fromPubkey: superAdmin.publicKey,
-    basePubkey: superAdmin.publicKey,
+    fromPubkey: wallet.publicKey,
+    basePubkey: wallet.publicKey,
     seed: "global-lottery-pool",
     newAccountPubkey: globalLotteryPoolKey,
     lamports : await provider.connection.getMinimumBalanceForRentExemption(GLOBAL_POOL_SIZE),
@@ -80,7 +80,7 @@ export const initProject = async (
   await solConnection.confirmTransaction(tx, "confirmed");
 
   showToast("Success. txHash=" + tx, 0);
-  console.log("txHash =", tx);*/
+  console.log("txHash =", tx);
   return false;
 }
 
@@ -98,6 +98,13 @@ export const getLotteryState = async (
     "user-lottery-pool",
     program.programId,
   );
+  
+  const [poolWalletKey, walletBump] = await PublicKey.findProgramAddress(
+    [Buffer.from(POOL_WALLET_SEED)],
+    program.programId
+  );
+  
+  console.log("poolWalletKey = ", poolWalletKey.toBase58());
   //try {
     console.log("userAddress = ", userAddress.toBase58());
     console.log("userLotteryPoolKey = ", userLotteryPoolKey.toBase58());
@@ -202,6 +209,16 @@ export const stakeToLottery = async (
     program.programId,
   );
   let userTokenAccount = await getNFTTokenAccount(nft_mint);
+
+  console.log("program.programId =", program.programId.toBase58());
+  console.log("userLotteryPool =", userLotteryPoolKey.toBase58());
+  console.log("globalLotteryPoolKey =", globalLotteryPoolKey.toBase58());
+  console.log("globalAuthority =", globalAuthority.toBase58());
+  console.log("userTokenAccount =", userTokenAccount.toBase58());
+  console.log("staked_nft_address =", staked_nft_address.toBase58());
+  console.log("nft_mint =", nft_mint.toBase58());
+  console.log("TOKEN_PROGRAM_ID =", TOKEN_PROGRAM_ID.toBase58());
+
   tx.add(program.instruction.stakeNftToLottery(
     bump, nft_bump, {
       accounts: {
@@ -238,10 +255,6 @@ export const withdrawFromLottery = async (
   const nft_mint = new PublicKey(mint);
   const [globalAuthority, bump] = await PublicKey.findProgramAddress(
     [Buffer.from(GLOBAL_AUTHORITY_SEED)],
-    program.programId
-  );
-  const [poolWalletKey, walletBump] = await PublicKey.findProgramAddress(
-    [Buffer.from(POOL_WALLET_SEED)],
     program.programId
   );
   let userLotteryPoolKey = await PublicKey.createWithSeed(
@@ -414,6 +427,47 @@ export const withdrawFromFixed = async (
         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY
+      }
+    }
+  );
+  await solConnection.confirmTransaction(txHash, "confirmed");
+  showToast("Success. txHash=" + txHash, 0);
+  console.log("txHash =", txHash);
+  return false;
+}
+
+export const claimReward = async (
+  wallet: WalletContextState
+) => {
+  if (!wallet.publicKey) return;
+  let cloneWindow: any = window;
+  let provider = new anchor.Provider(solConnection, cloneWindow['solana'], anchor.Provider.defaultOptions())
+  const program = new anchor.Program(IDL, PROGRAM_ID, provider);
+
+  const [globalAuthority, bump] = await PublicKey.findProgramAddress(
+    [Buffer.from(GLOBAL_AUTHORITY_SEED)],
+    program.programId
+  );
+  const [poolWalletKey, walletBump] = await PublicKey.findProgramAddress(
+    [Buffer.from(POOL_WALLET_SEED)],
+    program.programId
+  );
+  let userFixedPoolKey = await PublicKey.createWithSeed(
+    wallet.publicKey,
+    "user-fixed-pool",
+    program.programId,
+  );
+
+  let tx = new Transaction();
+
+  let txHash = await program.rpc.claimReward(
+    bump, 0, walletBump, {
+      accounts: {
+        owner: wallet.publicKey,
+        userFixedPool: userFixedPoolKey,
+        globalAuthority,
+        poolWallet: poolWalletKey,
+        systemProgram: SystemProgram.programId,
       }
     }
   );
