@@ -1,13 +1,13 @@
 [programs.devnet]
-staking_program = "6J239Qk8gMNpLKJ6Qd7AckKD4cmv21NzPc8vzMfr6q2o"
+staking_program = "FbaMJWS14yAPH68LwFAHxaBSukgBHnAY9VaEfhFxWerb"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
 
-cluster = "devnet"
-#cluster = "http://127.0.0.1:8899"
+#cluster = "devnet"
+cluster = "http://127.0.0.1:8899"
 #wallet = "/home/gitpod/.config/solana/id.json"
 wallet = "./test-keypair.json"
 

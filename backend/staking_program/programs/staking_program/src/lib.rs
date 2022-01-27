@@ -14,7 +14,7 @@ use constants::*;
 use error::*;
 use utils::*;
 
-declare_id!("6J239Qk8gMNpLKJ6Qd7AckKD4cmv21NzPc8vzMfr6q2o");
+declare_id!("FbaMJWS14yAPH68LwFAHxaBSukgBHnAY9VaEfhFxWerb");
 
 #[program]
 pub mod staking_program {
@@ -174,6 +174,8 @@ pub mod staking_program {
             timestamp
         )?;
 
+        fixed_pool.pending_reward += reward;
+
         ctx.accounts.global_authority.fixed_nft_count -= 1;
 
         let seeds = &[GLOBAL_AUTHORITY_SEED.as_bytes(), &[global_bump]];
@@ -189,7 +191,7 @@ pub mod staking_program {
             transfer_ctx,
             1
         )?;
-
+/*
         sol_transfer_with_signer(
             ctx.accounts.pool_wallet.to_account_info(),
             ctx.accounts.owner.to_account_info(),
@@ -197,7 +199,7 @@ pub mod staking_program {
             &[&[POOL_WALLET_SEED.as_ref(), &[pool_wallet_bump]]],
             reward
         )?;
-
+*/
         Ok(())
     }
 
@@ -245,11 +247,8 @@ pub struct Initialize<'info> {
     pub global_lottery_pool: AccountLoader<'info, GlobalLotteryPool>,
 
     #[account(
-        init_if_needed,
         seeds = [POOL_WALLET_SEED.as_ref()],
         bump = pool_wallet_bump,
-        payer = admin,
-        space = 0
     )]
     pub pool_wallet: AccountInfo<'info>,
 

@@ -66,11 +66,12 @@ pub struct StakedNFT {
 
 #[account(zero_copy)]
 pub struct UserPool {
-    // 2056
+    // 2064
     pub owner: Pubkey,                       // 32
     pub item_count: u64,                     // 8
     pub items: [StakedNFT; NFT_STAKE_MAX_COUNT],   // 40 * 50 = 2000
-    pub reward_time: i64                     // 8
+    pub reward_time: i64,                    // 8
+    pub pending_reward: u64                  // 8
 }
 impl Default for UserPool {
     #[inline]
@@ -83,7 +84,8 @@ impl Default for UserPool {
                     ..Default::default()
                 }; NFT_STAKE_MAX_COUNT
             ],
-            reward_time: 0
+            reward_time: 0,
+            pending_reward: 0
         }
     }
 }
@@ -106,9 +108,7 @@ impl UserPool {
                 if last_reward_time < self.items[index].stake_time {
                     last_reward_time = self.items[index].stake_time;
                 }
-
                 reward = (((now - last_reward_time) / DAY) as u64) * REWARD_PER_DAY;
-
                 // remove nft
                 if i != self.item_count - 1 {
                     let last_idx = self.item_count - 1;
@@ -134,6 +134,8 @@ impl UserPool {
             let reward = (((now - last_reward_time) / DAY) as u64) * REWARD_PER_DAY;
             total_reward += reward;
         }
+        total_reward += self.pending_reward;
+        self.pending_reward = 0;
         self.reward_time = now;
         Ok(total_reward)
     }

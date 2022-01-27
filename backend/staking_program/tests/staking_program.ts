@@ -25,7 +25,7 @@ describe('staking_program', () => {
   const lotteryPool = anchor.web3.Keypair.generate();
   const fixedPool = anchor.web3.Keypair.generate();
 
-  const USER_POOL_SIZE = 2056;
+  const USER_POOL_SIZE = 2064;
   const GLOBAL_POOL_SIZE = 360_016;
 
   let nft_token_mint = null;
