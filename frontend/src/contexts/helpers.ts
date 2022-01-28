@@ -21,9 +21,9 @@ const solConnection = new web3.Connection(web3.clusterApiUrl("devnet"));
 const ASSOCIATED_TOKEN_PROGRAM_ID: PublicKey = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
-const PROGRAM_ID = "8bAT4L4Z42frstG3dFasUMRd96L4a7EjUUvRiF9EwGVN";
+const PROGRAM_ID = "8ydPqBh9vTmJtPA8nZTppPUswnu42sjuFGvU8wndxAHz";
+const initAdminKey = new PublicKey("JAwNgkoSRMJzMndLtxBVSVp3ZPUfw1MEJ5GaAQ2gWcDT");
 const GLOBAL_AUTHORITY_SEED = "global-authority";
-const GLOBAL_LOTTERY_POOL_KEY = new PublicKey("JEEAt2Ask8RT68T47feDcNxnj7jvSmgeP4CCNFMvjMPy");
 const POOL_WALLET_SEED = "pool-wallet";
 const POOL_SIZE = 2064;
 const GLOBAL_POOL_SIZE = 360_016;
@@ -41,27 +41,45 @@ export const initProject = async (
     [Buffer.from(GLOBAL_AUTHORITY_SEED)],
     program.programId
   );
+
   const [poolWalletKey, walletBump] = await PublicKey.findProgramAddress(
     [Buffer.from(POOL_WALLET_SEED)],
     program.programId
   );
-  let global_lottery = anchor.web3.Keypair.generate();
-  let ix = SystemProgram.createAccount({
+
+  let globalLotteryPoolKey = await PublicKey.createWithSeed(
+    wallet.publicKey,
+    "global-lottery-pool",
+    program.programId,
+  );
+
+  let ix = SystemProgram.createAccountWithSeed({
     fromPubkey: wallet.publicKey,
-    newAccountPubkey: global_lottery.publicKey,
+    basePubkey: wallet.publicKey,
+    seed: "global-lottery-pool",
+    newAccountPubkey: globalLotteryPoolKey,
     lamports : await provider.connection.getMinimumBalanceForRentExemption(GLOBAL_POOL_SIZE),
     space: GLOBAL_POOL_SIZE,
     programId: program.programId,
-  })
+  });
 
-  console.log("globalLotteryPoolKey =", global_lottery.publicKey.toBase58())
+  /*
+  let ix = SystemProgram.createAccount({
+    fromPubkey: wallet.publicKey,
+    newAccountPubkey: globalLotteryKey,
+    lamports : await provider.connection.getMinimumBalanceForRentExemption(GLOBAL_POOL_SIZE),
+    space: GLOBAL_POOL_SIZE,
+    programId: program.programId,
+  })*/
+
+  console.log("globalLotteryPoolKey =", globalLotteryPoolKey.toBase58())
 
   const tx = await program.rpc.initialize(
     bump, walletBump, {
       accounts: {
         admin: wallet.publicKey,
         globalAuthority,
-        globalLotteryPool: global_lottery.publicKey,
+        globalLotteryPool: globalLotteryPoolKey,
         poolWallet: poolWalletKey,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY
@@ -73,9 +91,11 @@ export const initProject = async (
           lamports: 20000000
         })
       ],
-      signers: [global_lottery]
+      signers: []
     }
+    
   );
+  
   await solConnection.confirmTransaction(tx, "confirmed");
 
   showToast("Success. txHash=" + tx, 0);
@@ -210,9 +230,15 @@ export const stakeToLottery = async (
   );
   let userTokenAccount = await getNFTTokenAccount(nft_mint);
 
+  let globalLotteryPoolKey = await PublicKey.createWithSeed(
+    initAdminKey,
+    "global-lottery-pool",
+    program.programId,
+  );
+
   console.log("program.programId =", program.programId.toBase58());
   console.log("userLotteryPool =", userLotteryPoolKey.toBase58());
-  console.log("globalLotteryPoolKey =", GLOBAL_LOTTERY_POOL_KEY.toBase58());
+  console.log("globalLotteryPoolKey =", globalLotteryPoolKey.toBase58());
   console.log("globalAuthority =", globalAuthority.toBase58());
   console.log("userTokenAccount =", userTokenAccount.toBase58());
   console.log("staked_nft_address =", staked_nft_address.toBase58());
@@ -224,7 +250,7 @@ export const stakeToLottery = async (
       accounts: {
         owner: wallet.publicKey,
         userLotteryPool: userLotteryPoolKey,
-        globalLotteryPool: GLOBAL_LOTTERY_POOL_KEY,
+        globalLotteryPool: globalLotteryPoolKey,
         globalAuthority,
         userNftTokenAccount: userTokenAccount,
         destNftTokenAccount: staked_nft_address,
@@ -268,7 +294,14 @@ export const withdrawFromLottery = async (
     [Buffer.from("staked-nft"), nft_mint.toBuffer()],
     program.programId
   );
-  let globalLotteryPoolData: any = await program.account.globalLotteryPool.fetch(GLOBAL_LOTTERY_POOL_KEY);
+  
+  let globalLotteryPoolKey = await PublicKey.createWithSeed(
+    initAdminKey,
+    "global-lottery-pool",
+    program.programId,
+  );
+
+  let globalLotteryPoolData: any = await program.account.globalLotteryPool.fetch(globalLotteryPoolKey);
   let nftIndex = 0;
   for(let i = 0; i < globalLotteryPoolData.itemCount.toNumber(); i ++) {
     if (globalLotteryPoolData.lotteryItems[i].nftAddr.toBase58() == nft_mint.toBase58()) {
@@ -283,7 +316,7 @@ export const withdrawFromLottery = async (
       accounts: {
         owner: wallet.publicKey,
         userLotteryPool: userLotteryPoolKey,
-        globalLotteryPool: GLOBAL_LOTTERY_POOL_KEY,
+        globalLotteryPool: globalLotteryPoolKey,
         globalAuthority,
         userNftTokenAccount: userTokenAccount,
         stakedNftTokenAccount: staked_nft_address,

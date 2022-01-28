@@ -217,6 +217,10 @@ pub mod staking_program {
             timestamp
         )?;
 
+        if ctx.accounts.pool_wallet.to_account_info().lamports() < 1000_000_000 + reward {
+            return Err(StakingError::LackLamports.into());
+        }
+
         sol_transfer_with_signer(
             ctx.accounts.pool_wallet.to_account_info(),
             ctx.accounts.owner.to_account_info(),

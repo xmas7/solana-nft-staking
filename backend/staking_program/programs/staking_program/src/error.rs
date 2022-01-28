@@ -13,5 +13,7 @@ pub enum StakingError {
     #[msg("Staking Locked Now")]
     InvalidWithdrawTime,
     #[msg("Withdraw NFT Index OverFlow")]
-    IndexOverflow
+    IndexOverflow,
+    #[msg("Insufficient Lamports")]
+    LackLamports
 }
