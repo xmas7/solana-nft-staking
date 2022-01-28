@@ -21,7 +21,7 @@ const solConnection = new web3.Connection(web3.clusterApiUrl("devnet"));
 const ASSOCIATED_TOKEN_PROGRAM_ID: PublicKey = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
-const PROGRAM_ID = "Af4rBydLxGV4QeY7RPR1kxKNNbm3YWTXU33B2czD5cwJ";
+const PROGRAM_ID = "8bAT4L4Z42frstG3dFasUMRd96L4a7EjUUvRiF9EwGVN";
 const GLOBAL_AUTHORITY_SEED = "global-authority";
 const GLOBAL_LOTTERY_POOL_KEY = new PublicKey("JEEAt2Ask8RT68T47feDcNxnj7jvSmgeP4CCNFMvjMPy");
 const POOL_WALLET_SEED = "pool-wallet";
@@ -37,7 +37,6 @@ export const initProject = async (
   let provider = new anchor.Provider(solConnection, cloneWindow['solana'], anchor.Provider.defaultOptions())
   const program = new anchor.Program(IDL, PROGRAM_ID, provider);
 
-  let superOwner = anchor.web3.Keypair.fromSecretKey(bs58.decode("5tM1n3rhu6s3yKfDAaDqCYZM99feW72ZpSseNP5NnvZZ9MnUSTSmcThSQab36PQDQ8ZV9pjGpFXhim4dfinxwDg1"));
   const [globalAuthority, bump] = await PublicKey.findProgramAddress(
     [Buffer.from(GLOBAL_AUTHORITY_SEED)],
     program.programId
@@ -48,12 +47,13 @@ export const initProject = async (
   );
   let global_lottery = anchor.web3.Keypair.generate();
   let ix = SystemProgram.createAccount({
-    fromPubkey: superOwner.publicKey,
+    fromPubkey: wallet.publicKey,
     newAccountPubkey: global_lottery.publicKey,
     lamports : await provider.connection.getMinimumBalanceForRentExemption(GLOBAL_POOL_SIZE),
     space: GLOBAL_POOL_SIZE,
     programId: program.programId,
   })
+
   console.log("globalLotteryPoolKey =", global_lottery.publicKey.toBase58())
 
   const tx = await program.rpc.initialize(
@@ -66,8 +66,14 @@ export const initProject = async (
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY
       },
-      instructions: [ix],
-      signers: []
+      instructions: [ix, 
+        SystemProgram.transfer({
+          fromPubkey: wallet.publicKey,
+          toPubkey: poolWalletKey,
+          lamports: 20000000
+        })
+      ],
+      signers: [global_lottery]
     }
   );
   await solConnection.confirmTransaction(tx, "confirmed");
@@ -150,7 +156,7 @@ export const getGlobalState = async (
     let globalState = await program.account.globalPool.fetch(globalAuthority);
     return globalState;
   } catch {
-    return null;
+    return { lotteryNftCount: new BN(0), fixedNftCount: new BN(0)};
   }
 }
 
